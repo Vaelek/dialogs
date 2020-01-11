@@ -12,7 +12,7 @@ module.exports = dialog
 function dialog (opt) {
   opt = opt || {}
   opt = {
-    'img': {src: opt.icon || ''},
+    img: { src: opt.icon || '' },
     '.ok': opt.ok || 'OK',
     '.cancel': opt.cancel || 'Cancel',
     '.url': opt.hostname || window.location.hostname
@@ -44,13 +44,12 @@ function render (type, title, defaultValue, cb) {
     defaultValue = ''
   }
 
-  if (type === 'alert') cb = cb || function noop () {}
-  if (!cb) throw new Error(type + ' needs a callback')
-
   var opt = xtend(this)
-  opt['.type'] = {'class': 'dialog-widget ' + type}
-  opt['.title'] = title
-  opt['input'] = {value: defaultValue || ''}
+  opt['.type'] = { class: 'dialog-widget ' + type }
+  opt['.title'] = {
+    _html: (title || '').replace(/<[^>]+>/g).replace(/\n/, '<br>')
+  }
+  opt['input'] = { value: defaultValue || '' }
   if (inputPassword) {
     opt['input']['type'] = 'password'
   }
@@ -71,6 +70,13 @@ function render (type, title, defaultValue, cb) {
 
   eventListeners('addEventListener')
 
+  if (!cb) {
+    cb = function noop () {}
+    return new Promise(function (resolve, reject) {
+      cb = resolve
+    })
+  }
+
   function eventListeners (method) {
     el.querySelector('.ok')[method]('click', ok)
     el.querySelector('.cancel')[method]('click', cancel)
@@ -85,7 +91,9 @@ function render (type, title, defaultValue, cb) {
       if (node.classList && node.classList.contains('dialog-widget')) return
       node = node.parentNode
     }
-    setTimeout(function () { e.target.blur() })
+    setTimeout(function () {
+      e.target.blur()
+    })
   }
 
   function cancel () {
@@ -99,6 +107,7 @@ function render (type, title, defaultValue, cb) {
 
   function ok (e) {
     e.preventDefault()
+    // eslint-disable-next-line
     if (type === 'confirm' || type === 'alert') cb(true)
     if (type === 'prompt') cb(el.querySelector('input').value)
     cleanup()
